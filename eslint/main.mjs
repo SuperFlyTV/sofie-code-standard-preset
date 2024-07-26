@@ -1,0 +1,239 @@
+// const { commonPlugins, tsPlugins, commonExtends, tsExtends, commonRules, tsRules, tsParser } = require('./fragments')
+
+// module.exports = {
+// 	extends: commonExtends,
+// 	plugins: commonPlugins,
+// 	rules: {
+// 		'prettier/prettier': 'error',
+// 	},
+// 	env: { es2017: true },
+// 	parserOptions: { sourceType: 'module', ecmaVersion: 2018 },
+// 	overrides: [
+// 		// Note: these replace the values defined above, so make sure to extend them if they are needed
+// 		{
+// 			files: ['*.ts'],
+// 			extends: tsExtends,
+// 			plugins: tsPlugins,
+// 			...tsParser,
+// 			env: {
+// 				'jest/globals': false, // Block jest from this
+// 			},
+// 			rules: {
+// 				...commonRules,
+// 				...tsRules,
+// 			},
+// 		},
+// 		{
+// 			files: ['*.js'],
+// 			settings: {
+// 				node: {
+// 					tryExtensions: ['.js', '.json', '.node', '.ts'],
+// 				},
+// 			},
+// 			env: {
+// 				'jest/globals': false, // Block jest from this
+// 			},
+// 			rules: {
+// 				...commonRules,
+// 			},
+// 		},
+// 		{
+// 			files: ['src/**/__tests__/**/*.ts'],
+// 			extends: tsExtends,
+// 			plugins: tsPlugins,
+// 			...tsParser,
+// 			env: {
+// 				'jest/globals': true,
+// 				jest: true,
+// 			},
+// 			rules: {
+// 				...commonRules,
+// 				...tsRules,
+// 				'@typescript-eslint/ban-ts-ignore': 'off',
+// 				'@typescript-eslint/ban-ts-comment': 'off',
+// 			},
+// 		},
+// 		{
+// 			files: ['examples/**/*.ts'],
+// 			extends: tsExtends,
+// 			plugins: tsPlugins,
+// 			...tsParser,
+// 			env: {
+// 				'jest/globals': false, // Block jest from this
+// 			},
+// 			rules: {
+// 				...commonRules,
+// 				...tsRules,
+// 				'no-process-exit': 'off',
+// 				'node/no-missing-import': 'off',
+// 			},
+// 		},
+// 	],
+// }
+
+// TODO - consolidate the sofie config into the below, this is currently derived from companion
+
+
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
+import eslint from '@eslint/js'
+import neslint from 'eslint-plugin-n'
+import tseslint from 'typescript-eslint'
+import jestPlugin from 'eslint-plugin-jest'
+
+/**
+ *
+ * @template T
+ * @param {Record<string, T | null | undefined>} obj
+ * @returns {Record<string, T>}
+ */
+function compactObj(obj) {
+	/** @type {Record<string, T>} */
+	const result = {}
+
+	for (const [key, value] of Object.entries(obj)) {
+		if (value) result[key] = value
+	}
+
+	return result
+}
+
+/**
+ * @param {{ ignores?: string[] }} options
+ * @returns {Promise<import('eslint').Linter.FlatConfig[]>}
+ */
+export async function generateEslintConfig(options) {
+	/** @type {import('eslint').Linter.Config} */
+	const result = {
+		settings: {
+			n: {
+				tryExtensions: ['.js', '.cjs', '.mjs', '.json', '.node', '.ts', '.cts', '.mts', '.d.ts'],
+			},
+		},
+		// extends: commonExtends,
+    // @ts-expect-error tseslint type mismatch
+		plugins: compactObj({
+      jest: jestPlugin,
+			'@typescript-eslint': tseslint.plugin,
+		}),
+		rules: {
+			// Default rules to be applied everywhere
+			'prettier/prettier': 'error',
+
+			...eslint.configs.recommended.rules,
+
+			'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)' }],
+			'no-extra-semi': 'off',
+			// 'n/no-unsupported-features/es-syntax': ['error', { ignores: ['modules'] }],
+			'no-use-before-define': 'off',
+			'no-warning-comments': ['error', { terms: ['nocommit', '@nocommit', '@no-commit'] }],
+			// 'jest/no-mocks-import': 'off',
+		},
+	}
+
+	return [
+		// setup the parser first
+		tseslint
+			? {
+					languageOptions: {
+						parser: tseslint.parser,
+						parserOptions: {
+							project: true,
+						},
+					},
+				}
+			: null,
+
+		neslint.configs['flat/recommended-script'],
+		// {
+		//   rules: {
+		//     'n/no-missing-import':["error",  {
+		//       // include a wider range of extensions
+		//       "tryExtensions": [".js", ".cjs", ".mjs", ".json", ".node", ".ts", ".cts", ".mts"],
+		//     }]
+		//   }
+		// },
+		result,
+		...(tseslint ? tseslint.configs.recommendedTypeChecked : []),
+		{
+			// disable type-aware linting on JS files
+			files: ['**/*.js', '**/*.cjs', '**/*.mjs'],
+			...tseslint.configs.disableTypeChecked,
+		},
+		tseslint
+			? {
+					files: ['**/*.ts', '**/*.cts', '**/*.mts'],
+					rules: {
+						'@typescript-eslint/no-explicit-any': 'off',
+						'@typescript-eslint/interface-name-prefix': 'off',
+						'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)' }],
+						'@typescript-eslint/no-floating-promises': 'error',
+						'@typescript-eslint/explicit-module-boundary-types': ['error'],
+						'@typescript-eslint/promise-function-async': 'error',
+						'@typescript-eslint/require-await': 'off', // conflicts with 'promise-function-async'
+
+						/** Disable some annoyingly strict rules from the 'recommended-requiring-type-checking' pack */
+						'@typescript-eslint/no-unsafe-assignment': 0,
+						'@typescript-eslint/no-unsafe-member-access': 0,
+						'@typescript-eslint/no-unsafe-argument': 0,
+						'@typescript-eslint/no-unsafe-return': 0,
+						'@typescript-eslint/no-unsafe-call': 0,
+						'@typescript-eslint/restrict-template-expressions': 0,
+						'@typescript-eslint/restrict-plus-operands': 0,
+						'@typescript-eslint/no-redundant-type-constituents': 0,
+						/** End 'recommended-requiring-type-checking' overrides */
+					},
+				}
+			: null,
+		jestPlugin
+			? {
+					// enable jest rules on test files
+					files: ['**/__tests__/**/*', 'test/**/*'],
+					...jestPlugin.configs['flat/recommended'],
+					rules: {
+						...jestPlugin.configs['flat/recommended'].rules,
+						'jest/no-mocks-import': 'off',
+					},
+				}
+			: null,
+		tseslint
+			? {
+					files: ['**/__tests__/**/*', 'test/**/*'],
+					rules: {
+						'@typescript-eslint/ban-ts-ignore': 'off',
+						'@typescript-eslint/ban-ts-comment': 'off',
+					},
+				}
+			: null,
+		{
+			// disable type-aware linting on JS files
+			files: [
+				'examples/**/*.js',
+				'examples/**/*.cjs',
+				'examples/**/*.mjs',
+				'examples/**/*.ts',
+				'examples/**/*.cts',
+				'examples/**/*.mts',
+			],
+			rules: {
+				'no-process-exit': 'off',
+				'n/no-missing-import': 'off',
+			},
+		},
+
+		// Add prettier at the end to give it final say on formatting
+		eslintPluginPrettierRecommended,
+		{
+			// But lastly, ensure that we ignore certain paths
+			ignores: [
+				'.yarn/*',
+				'**/dist/*',
+				'**/coverage/*',
+				'**/scratch/*',
+				'/dist',
+				'**/docs/*',
+				'**/generated/*',
+				...(options.ignores || []),
+			],
+		},
+	].filter((v) => !!v)
+}
