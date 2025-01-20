@@ -179,7 +179,6 @@ export async function generateEslintConfig(options) {
 						// These clash with ts rules
 						'no-unused-vars': 'off',
 						'no-redeclare': 'off',
-						'no-undef': 'off',
 
 						// Custom rules
 						'@typescript-eslint/no-explicit-any': 'off',
@@ -260,6 +259,15 @@ export async function generateEslintConfig(options) {
 				'n/no-missing-import': 'off',
 			},
 		},
+
+		!options.disableNodeRules
+			? {
+					files: ['eslint.config.*'],
+					rules: {
+						'n/no-extraneous-import': 'off',
+					},
+				}
+			: null,
 
 		// Add prettier at the end to give it final say on formatting
 		eslintPluginPrettierRecommended,
