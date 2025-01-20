@@ -97,7 +97,7 @@ function compactObj(obj) {
 }
 
 /**
- * @param {{ ignores?: string[] }} options
+ * @param {{ ignores?: string[], tsconfigName?: string | string[], disableNodeRules?: boolean }} options
  * @returns {Promise<import('eslint').Linter.FlatConfig[]>}
  */
 export async function generateEslintConfig(options) {
@@ -105,7 +105,7 @@ export async function generateEslintConfig(options) {
 	const result = {
 		settings: {
 			n: {
-				tryExtensions: ['.js', '.cjs', '.mjs', '.json', '.node', '.ts', '.cts', '.mts', '.d.ts'],
+				tryExtensions: ['.js', '.cjs', '.mjs', '.json', '.node', '.ts', '.cts', '.mts', '.d.ts', '.tsx'],
 			},
 		},
 		// extends: commonExtends,
@@ -120,7 +120,6 @@ export async function generateEslintConfig(options) {
 
 			...eslint.configs.recommended.rules,
 
-			'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)' }],
 			'no-extra-semi': 'off',
 			// 'n/no-unsupported-features/es-syntax': ['error', { ignores: ['modules'] }],
 			'no-use-before-define': 'off',
@@ -136,7 +135,7 @@ export async function generateEslintConfig(options) {
 					languageOptions: {
 						parser: tseslint.parser,
 						parserOptions: {
-							project: true,
+							project: options.tsconfigName || true,
 						},
 					},
 				}
@@ -153,9 +152,16 @@ export async function generateEslintConfig(options) {
 			// Disable type-aware linting on JS files
 			files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.jsx'],
 			...tseslint.configs.disableTypeChecked,
+			rules: {
+				...tseslint.configs.disableTypeChecked.rules,
+				'no-unused-vars': [
+					'error',
+					{ argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)', caughtErrorsIgnorePattern: '^_' },
+				],
+			},
 		},
 
-		neslint.configs['flat/recommended-script'],
+		!options.disableNodeRules ? neslint.configs['flat/recommended-script'] : undefined,
 		// {
 		//   rules: {
 		//     'n/no-missing-import':["error",  {
@@ -168,11 +174,15 @@ export async function generateEslintConfig(options) {
 
 		tseslint
 			? {
-					files: ['**/*.ts', '**/*.cts', '**/*.mts'],
+					files: ['**/*.ts', '**/*.cts', '**/*.mts', '**/*.tsx'],
 					rules: {
+						'no-unused-vars': 'off',
 						'@typescript-eslint/no-explicit-any': 'off',
 						'@typescript-eslint/interface-name-prefix': 'off',
-						'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)' }],
+						'@typescript-eslint/no-unused-vars': [
+							'error',
+							{ argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)', caughtErrorsIgnorePattern: '^_' },
+						],
 						'@typescript-eslint/no-floating-promises': 'error',
 						'@typescript-eslint/explicit-module-boundary-types': ['error'],
 						'@typescript-eslint/promise-function-async': 'error',
@@ -208,6 +218,25 @@ export async function generateEslintConfig(options) {
 					rules: {
 						'@typescript-eslint/ban-ts-ignore': 'off',
 						'@typescript-eslint/ban-ts-comment': 'off',
+					},
+				}
+			: null,
+		!options.disableNodeRules
+			? {
+					files: ['**/__tests__/**/*', 'test/**/*'],
+					rules: {
+						'n/no-unpublished-import': [
+							'error',
+							{
+								allowModules: [
+									'jest-mock-extended',
+									'type-fest',
+									'@testing-library/jest-dom',
+									'@testing-library/react',
+									'@testing-library/user-event',
+								],
+							},
+						],
 					},
 				}
 			: null,
