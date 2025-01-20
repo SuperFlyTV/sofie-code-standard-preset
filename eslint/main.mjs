@@ -176,7 +176,11 @@ export async function generateEslintConfig(options) {
 			? {
 					files: ['**/*.ts', '**/*.cts', '**/*.mts', '**/*.tsx'],
 					rules: {
+						// These clash with ts rules
 						'no-unused-vars': 'off',
+						'no-redeclare': 'off',
+
+						// Custom rules
 						'@typescript-eslint/no-explicit-any': 'off',
 						'@typescript-eslint/interface-name-prefix': 'off',
 						'@typescript-eslint/no-unused-vars': [
