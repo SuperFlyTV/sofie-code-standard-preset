@@ -51,22 +51,23 @@
 		"@sofie-automation/eslint-plugin": "^0.1.1",
 		"date-fns": "^2.30.0",
 		"eslint-config-prettier": "^9.1.0",
-		"eslint-plugin-jest": "^28.6.0",
-		"eslint-plugin-n": "^17.10.0",
-		"eslint-plugin-prettier": "^5.2.1",
+		"eslint-plugin-jest": "^28.11.0",
+		"eslint-plugin-n": "^17.15.1",
+		"eslint-plugin-prettier": "^5.2.3",
 		"license-checker": "^25.0.1",
 		"meow": "^11.0.0",
-		"prettier": "^3.3.3",
 		"read-pkg-up": "^9.1.0",
 		"semver": "^7.6.3",
-		"typescript-eslint": "^8.0.0-alpha.54"
+		"typescript-eslint": "^8.20.0"
 	},
 	"devDependencies": {
-		"@types/eslint": "^9.6.0"
+		"@types/eslint": "^9.6.1",
+		"prettier": "^3.4.2"
 	},
 	"peerDependencies": {
 		"eslint": "^9",
-		"typescript": "~5.5"
+		"prettier": "^3",
+		"typescript": "~5.7"
 	},
 	"packageManager": "yarn@4.6.0"
 }
