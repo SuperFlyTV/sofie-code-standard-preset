@@ -49,14 +49,14 @@
 	],
 	"dependencies": {
 		"@sofie-automation/eslint-plugin": "^0.1.1",
-		"date-fns": "^2.30.0",
-		"eslint-config-prettier": "^9.1.0",
+		"date-fns": "^4.1.0",
+		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-jest": "^28.11.0",
 		"eslint-plugin-n": "^17.15.1",
 		"eslint-plugin-prettier": "^5.2.3",
 		"license-checker": "^25.0.1",
-		"meow": "^11.0.0",
-		"read-pkg-up": "^9.1.0",
+		"meow": "^13.2.0",
+		"read-package-up": "^11.0.0",
 		"semver": "^7.6.3",
 		"typescript-eslint": "^8.20.0"
 	},

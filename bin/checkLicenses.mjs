@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 'use strict'
 import meow from 'meow'
-import { readPackageUpSync } from 'read-pkg-up'
+import { readPackageUpSync } from 'read-package-up'
 import path from 'path'
 import checker from 'license-checker'
 
@@ -27,7 +27,7 @@ const cli = meow(
 				type: 'string',
 			},
 		},
-	}
+	},
 )
 
 // This is so that when used in a private project it validates
@@ -65,21 +65,23 @@ if (cli.flags.debug) {
 	console.log('allowList', allowList)
 }
 
-checker.init({
-	start: path.resolve('.'),
-	onlyAllow: allowList,
-	excludePackages: excludePackages,
-	summary: !cli.flags.debug
-}, (err, packages) => {
-
-	if (err) {
-		//Handle error
-		console.error(err)
-		process.exit(1)
-	} else {
-		if (cli.flags.debug) {
-			console.log(packages)
+checker.init(
+	{
+		start: path.resolve('.'),
+		onlyAllow: allowList,
+		excludePackages: excludePackages,
+		summary: !cli.flags.debug,
+	},
+	(err, packages) => {
+		if (err) {
+			//Handle error
+			console.error(err)
+			process.exit(1)
+		} else {
+			if (cli.flags.debug) {
+				console.log(packages)
+			}
+			process.exit(0)
 		}
-		process.exit(0)
-	}
-});
+	},
+)
