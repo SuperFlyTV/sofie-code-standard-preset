@@ -73,7 +73,6 @@
 
 // TODO - consolidate the sofie config into the below, this is currently derived from companion
 
-
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import eslint from '@eslint/js'
 import neslint from 'eslint-plugin-n'
@@ -110,9 +109,9 @@ export async function generateEslintConfig(options) {
 			},
 		},
 		// extends: commonExtends,
-    // @ts-expect-error tseslint type mismatch
+		// @ts-expect-error tseslint type mismatch
 		plugins: compactObj({
-      jest: jestPlugin,
+			jest: jestPlugin,
 			'@typescript-eslint': tseslint.plugin,
 		}),
 		rules: {
@@ -131,9 +130,9 @@ export async function generateEslintConfig(options) {
 	}
 
 	return [
-		// setup the parser first
 		tseslint
 			? {
+					// Setup the parser for js/ts
 					languageOptions: {
 						parser: tseslint.parser,
 						parserOptions: {
@@ -142,6 +141,19 @@ export async function generateEslintConfig(options) {
 					},
 				}
 			: null,
+
+		...(tseslint
+			? tseslint.configs.recommendedTypeChecked.map((conf) => ({
+					...conf,
+					// Only apply these rules to TypeScript files
+					files: ['**/*.ts', '**/*.cts', '**/*.mts', '**/*.tsx'],
+				}))
+			: []),
+		{
+			// Disable type-aware linting on JS files
+			files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.jsx'],
+			...tseslint.configs.disableTypeChecked,
+		},
 
 		neslint.configs['flat/recommended-script'],
 		// {
@@ -153,12 +165,7 @@ export async function generateEslintConfig(options) {
 		//   }
 		// },
 		result,
-		...(tseslint ? tseslint.configs.recommendedTypeChecked : []),
-		{
-			// disable type-aware linting on JS files
-			files: ['**/*.js', '**/*.cjs', '**/*.mjs'],
-			...tseslint.configs.disableTypeChecked,
-		},
+
 		tseslint
 			? {
 					files: ['**/*.ts', '**/*.cts', '**/*.mts'],
