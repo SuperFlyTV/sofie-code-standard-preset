@@ -179,6 +179,7 @@ export async function generateEslintConfig(options) {
 						// These clash with ts rules
 						'no-unused-vars': 'off',
 						'no-redeclare': 'off',
+						'no-undef': 'off',
 
 						// Custom rules
 						'@typescript-eslint/no-explicit-any': 'off',
