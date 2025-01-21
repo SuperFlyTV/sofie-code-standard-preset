@@ -91,6 +91,8 @@ export async function generateEslintConfig(options) {
 				// These clash with ts rules
 				'no-unused-vars': 'off',
 				'no-redeclare': 'off',
+				'no-undef': 'off',
+				'no-dupe-class-members': 'off',
 
 				...sofiePlugin.configs.all.rules,
 
@@ -106,6 +108,13 @@ export async function generateEslintConfig(options) {
 				'@typescript-eslint/promise-function-async': 'error',
 				'@typescript-eslint/require-await': 'off', // conflicts with 'promise-function-async'
 				'@typescript-eslint/no-duplicate-enum-values': 'error',
+				'@typescript-eslint/no-require-imports': [
+					'error',
+					{
+						allow: ['\\.json$'],
+						// allowAsImport: true,
+					},
+				],
 
 				/** Disable some annoyingly strict rules from the 'recommended-requiring-type-checking' pack */
 				'@typescript-eslint/no-unsafe-assignment': 0,
