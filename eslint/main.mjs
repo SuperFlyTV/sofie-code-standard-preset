@@ -78,6 +78,7 @@ import eslint from '@eslint/js'
 import neslint from 'eslint-plugin-n'
 import tseslint from 'typescript-eslint'
 import jestPlugin from 'eslint-plugin-jest'
+import sofiePlugin from '@sofie-automation/eslint-plugin'
 
 /**
  *
@@ -101,53 +102,22 @@ function compactObj(obj) {
  * @returns {Promise<import('eslint').Linter.FlatConfig[]>}
  */
 export async function generateEslintConfig(options) {
-	/** @type {import('eslint').Linter.Config} */
-	const result = {
-		settings: {
-			n: {
-				tryExtensions: ['.js', '.cjs', '.mjs', '.json', '.node', '.ts', '.cts', '.mts', '.d.ts', '.tsx'],
+	return [
+		{
+			// Setup the parser for js/ts
+			languageOptions: {
+				parser: tseslint.parser,
+				parserOptions: {
+					project: options.tsconfigName || true,
+				},
 			},
 		},
-		// extends: commonExtends,
-		// @ts-expect-error tseslint type mismatch
-		plugins: compactObj({
-			jest: jestPlugin,
-			'@typescript-eslint': tseslint.plugin,
-		}),
-		rules: {
-			// Default rules to be applied everywhere
-			'prettier/prettier': 'error',
 
-			...eslint.configs.recommended.rules,
-
-			'no-extra-semi': 'off',
-			// 'n/no-unsupported-features/es-syntax': ['error', { ignores: ['modules'] }],
-			'no-use-before-define': 'off',
-			'no-warning-comments': ['error', { terms: ['nocommit', '@nocommit', '@no-commit'] }],
-			// 'jest/no-mocks-import': 'off',
-		},
-	}
-
-	return [
-		tseslint
-			? {
-					// Setup the parser for js/ts
-					languageOptions: {
-						parser: tseslint.parser,
-						parserOptions: {
-							project: options.tsconfigName || true,
-						},
-					},
-				}
-			: null,
-
-		...(tseslint
-			? tseslint.configs.recommendedTypeChecked.map((conf) => ({
-					...conf,
-					// Only apply these rules to TypeScript files
-					files: ['**/*.ts', '**/*.cts', '**/*.mts', '**/*.tsx'],
-				}))
-			: []),
+		...tseslint.configs.recommendedTypeChecked.map((conf) => ({
+			...conf,
+			// Only apply these rules to TypeScript files
+			files: ['**/*.ts', '**/*.cts', '**/*.mts', '**/*.tsx'],
+		})),
 		{
 			// Disable type-aware linting on JS files
 			files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.jsx'],
@@ -162,49 +132,67 @@ export async function generateEslintConfig(options) {
 		},
 
 		!options.disableNodeRules ? neslint.configs['flat/recommended-script'] : undefined,
-		// {
-		//   rules: {
-		//     'n/no-missing-import':["error",  {
-		//       // include a wider range of extensions
-		//       "tryExtensions": [".js", ".cjs", ".mjs", ".json", ".node", ".ts", ".cts", ".mts"],
-		//     }]
-		//   }
-		// },
-		result,
 
-		tseslint
-			? {
-					files: ['**/*.ts', '**/*.cts', '**/*.mts', '**/*.tsx'],
-					rules: {
-						// These clash with ts rules
-						'no-unused-vars': 'off',
-						'no-redeclare': 'off',
+		{
+			settings: {
+				n: {
+					tryExtensions: ['.js', '.cjs', '.mjs', '.json', '.node', '.ts', '.cts', '.mts', '.d.ts', '.tsx'],
+				},
+			},
+			// extends: commonExtends,
+			// @ts-expect-error tseslint type mismatch
+			plugins: compactObj({
+				jest: jestPlugin,
+				'@typescript-eslint': tseslint.plugin,
+				'@sofie-automation': sofiePlugin,
+			}),
+			rules: {
+				// Default rules to be applied everywhere
+				'prettier/prettier': 'error',
 
-						// Custom rules
-						'@typescript-eslint/no-explicit-any': 'off',
-						'@typescript-eslint/interface-name-prefix': 'off',
-						'@typescript-eslint/no-unused-vars': [
-							'error',
-							{ argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)', caughtErrorsIgnorePattern: '^_' },
-						],
-						'@typescript-eslint/no-floating-promises': 'error',
-						'@typescript-eslint/explicit-module-boundary-types': ['error'],
-						'@typescript-eslint/promise-function-async': 'error',
-						'@typescript-eslint/require-await': 'off', // conflicts with 'promise-function-async'
+				...eslint.configs.recommended.rules,
 
-						/** Disable some annoyingly strict rules from the 'recommended-requiring-type-checking' pack */
-						'@typescript-eslint/no-unsafe-assignment': 0,
-						'@typescript-eslint/no-unsafe-member-access': 0,
-						'@typescript-eslint/no-unsafe-argument': 0,
-						'@typescript-eslint/no-unsafe-return': 0,
-						'@typescript-eslint/no-unsafe-call': 0,
-						'@typescript-eslint/restrict-template-expressions': 0,
-						'@typescript-eslint/restrict-plus-operands': 0,
-						'@typescript-eslint/no-redundant-type-constituents': 0,
-						/** End 'recommended-requiring-type-checking' overrides */
-					},
-				}
-			: null,
+				'no-extra-semi': 'off',
+				// 'n/no-unsupported-features/es-syntax': ['error', { ignores: ['modules'] }],
+				'no-use-before-define': 'off',
+				'no-warning-comments': ['error', { terms: ['nocommit', '@nocommit', '@no-commit'] }],
+				// 'jest/no-mocks-import': 'off',
+			},
+		},
+
+		{
+			files: ['**/*.ts', '**/*.cts', '**/*.mts', '**/*.tsx'],
+			rules: {
+				// These clash with ts rules
+				'no-unused-vars': 'off',
+				'no-redeclare': 'off',
+
+				...sofiePlugin.configs.all.rules,
+
+				// Custom rules
+				'@typescript-eslint/no-explicit-any': 'off',
+				'@typescript-eslint/interface-name-prefix': 'off',
+				'@typescript-eslint/no-unused-vars': [
+					'error',
+					{ argsIgnorePattern: '^_', varsIgnorePattern: '^_(.+)', caughtErrorsIgnorePattern: '^_' },
+				],
+				'@typescript-eslint/no-floating-promises': 'error',
+				'@typescript-eslint/explicit-module-boundary-types': ['error'],
+				'@typescript-eslint/promise-function-async': 'error',
+				'@typescript-eslint/require-await': 'off', // conflicts with 'promise-function-async'
+
+				/** Disable some annoyingly strict rules from the 'recommended-requiring-type-checking' pack */
+				'@typescript-eslint/no-unsafe-assignment': 0,
+				'@typescript-eslint/no-unsafe-member-access': 0,
+				'@typescript-eslint/no-unsafe-argument': 0,
+				'@typescript-eslint/no-unsafe-return': 0,
+				'@typescript-eslint/no-unsafe-call': 0,
+				'@typescript-eslint/restrict-template-expressions': 0,
+				'@typescript-eslint/restrict-plus-operands': 0,
+				'@typescript-eslint/no-redundant-type-constituents': 0,
+				/** End 'recommended-requiring-type-checking' overrides */
+			},
+		},
 		jestPlugin
 			? {
 					// enable jest rules on test files
@@ -216,15 +204,13 @@ export async function generateEslintConfig(options) {
 					},
 				}
 			: null,
-		tseslint
-			? {
-					files: ['**/__tests__/**/*', 'test/**/*'],
-					rules: {
-						'@typescript-eslint/ban-ts-ignore': 'off',
-						'@typescript-eslint/ban-ts-comment': 'off',
-					},
-				}
-			: null,
+		{
+			files: ['**/__tests__/**/*', 'test/**/*'],
+			rules: {
+				'@typescript-eslint/ban-ts-ignore': 'off',
+				'@typescript-eslint/ban-ts-comment': 'off',
+			},
+		},
 		!options.disableNodeRules
 			? {
 					files: ['**/__tests__/**/*', 'test/**/*'],
